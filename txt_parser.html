@@ -3,74 +3,90 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Flexible Text Extractor</title>
+  <title>Smart Text Extractor</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    textarea, input { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
+    textarea, input, select { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
     button { padding: 10px 20px; margin-top: 10px; cursor: pointer; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background-color: #f4f4f4; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
 
-  <h2>Custom Text Extractor</h2>
+  <h2>🔍 Smart Text Extractor</h2>
 
-  <label for="textInput">Paste your text below:</label>
+  <label for="textInput">Paste your text:</label>
   <textarea id="textInput" placeholder="Enter or paste your text here..." rows="10"></textarea>
 
-  <label for="startTag">Start string (e.g., &lt;loc&gt;):</label>
-  <input id="startTag" type="text" placeholder="Start string">
+  <label for="modeSelect">Choose Extraction Type:</label>
+  <select id="modeSelect" onchange="toggleInputMode()">
+    <option value="custom">Custom Tag/Pattern</option>
+    <option value="url">Extract URLs (websites)</option>
+  </select>
 
-  <label for="endTag">End string (e.g., &lt;/loc&gt;):</label>
-  <input id="endTag" type="text" placeholder="End string">
+  <div id="customInputs">
+    <label for="startTag">Start string (e.g., &lt;loc&gt;):</label>
+    <input id="startTag" type="text" placeholder="Start string">
+    
+    <label for="endTag">End string (e.g., &lt;/loc&gt;):</label>
+    <input id="endTag" type="text" placeholder="End string">
+  </div>
 
   <button onclick="extractMatches()">Extract</button>
 
-  <table id="resultsTable" style="display:none;">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Match</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div id="resultsContainer"></div>
 
   <script>
-    function escapeRegExp(string) {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    function toggleInputMode() {
+      const mode = document.getElementById("modeSelect").value;
+      const customInputs = document.getElementById("customInputs");
+      customInputs.style.display = mode === "custom" ? "block" : "none";
     }
 
     function extractMatches() {
       const text = document.getElementById("textInput").value;
-      const start = escapeRegExp(document.getElementById("startTag").value);
-      const end = escapeRegExp(document.getElementById("endTag").value);
+      const mode = document.getElementById("modeSelect").value;
+      let matches = [];
 
-      if (!start || !end) {
-        alert("Please enter both start and end strings.");
+      if (mode === "url") {
+        const urlRegex = /https?:\/\/[^\s"'<>\]]+/g;
+        matches = text.match(urlRegex) || [];
+      } else {
+        const start = document.getElementById("startTag").value;
+        const end = document.getElementById("endTag").value;
+
+        if (!start || !end) {
+          alert("Please provide both start and end strings.");
+          return;
+        }
+
+        const pattern = new RegExp(`${escapeRegExp(start)}(.*?)${escapeRegExp(end)}`, "gs");
+        matches = [...text.matchAll(pattern)].map(m => m[1]);
+      }
+
+      displayResults(matches);
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function displayResults(matches) {
+      const container = document.getElementById("resultsContainer");
+      if (matches.length === 0) {
+        container.innerHTML = "<p>No matches found.</p>";
         return;
       }
 
-      const regex = new RegExp(`${start}(.*?)${end}`, "gs");
-      const matches = [...text.matchAll(regex)];
-
-      const table = document.getElementById("resultsTable");
-      const tbody = table.querySelector("tbody");
-      tbody.innerHTML = "";
-
-      if (matches.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='2'>No matches found.</td></tr>";
-      } else {
-        matches.forEach((match, index) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `<td>${index + 1}</td><td>${match[1]}</td>`;
-          tbody.appendChild(row);
-        });
-      }
-
-      table.style.display = "table";
+      let html = "<table><thead><tr><th>#</th><th>Match</th></tr></thead><tbody>";
+      matches.forEach((match, index) => {
+        html += `<tr><td>${index + 1}</td><td>${match}</td></tr>`;
+      });
+      html += "</tbody></table>";
+      container.innerHTML = html;
     }
   </script>
 
