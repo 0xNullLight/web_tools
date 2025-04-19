@@ -5,14 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Text Parser Tool</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    textarea, input, select { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
-    button { padding: 10px 20px; margin-top: 10px; cursor: pointer; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f4f4f4; }
-    .hidden { display: none; }
-    a { color: blue; text-decoration: underline; }
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 20px; 
+      max-width: 800px; 
+      margin: auto; 
+      background-color: #000; /* Black background */
+      color: #fff; /* White text */
+    }
+    textarea, input, select { 
+      width: 100%; 
+      padding: 8px; 
+      margin: 5px 0; 
+      box-sizing: border-box; 
+      background-color: #333; /* Dark background for inputs */
+      color: #fff; /* White text in inputs */
+      border: 1px solid #444; /* Dark border */
+    }
+    button { 
+      padding: 10px 20px; 
+      margin-top: 10px; 
+      cursor: pointer; 
+      background-color: #444; /* Dark button */
+      color: #fff; /* White text on button */
+      border: none;
+    }
+    button:hover {
+      background-color: #555; /* Lighter dark on hover */
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 20px; 
+    }
+    th, td { 
+      border: 1px solid #444; 
+      padding: 8px; 
+      text-align: left; 
+      background-color: #222; /* Dark table background */
+    }
+    th { 
+      background-color: #555; /* Lighter dark for headers */
+    }
+    .hidden { 
+      display: none; 
+    }
+    a { 
+      color: #1E90FF; /* Light blue color for links */
+      text-decoration: underline; 
+    }
   </style>
 </head>
 <body>
