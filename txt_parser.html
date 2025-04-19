@@ -29,27 +29,14 @@
   </select>
 
   <div id="customInputs" class="hidden">
-    <label for="startTag">Start string:</label>
+    <label for="startTag">Start string (e.g., &lt;title&gt;, BEGIN:):</label>
     <input id="startTag" type="text" placeholder="e.g., <title>">
 
-    <label for="endTag">End string:</label>
+    <label for="endTag">End string (e.g., &lt;/title&gt;, END:):</label>
     <input id="endTag" type="text" placeholder="e.g., </title>">
   </div>
 
   <button onclick="extractText()">Extract</button>
-
-  <div id="saveSection" class="hidden">
-    <label for="saveName">Save As:</label>
-    <input id="saveName" type="text" placeholder="Enter a name for your save">
-    <button onclick="saveResult()">💾 Save Result</button>
-  </div>
-
-  <div>
-    <label for="savedData">Load Saved:</label>
-    <select id="savedData" onchange="loadSaved()">
-      <option value="">-- Select a saved item --</option>
-    </select>
-  </div>
 
   <table id="resultsTable" class="hidden">
     <thead>
@@ -68,82 +55,56 @@
     }
 
     function extractText() {
+      const text = document.getElementById("textInput").value;
       const mode = document.getElementById("modeSelect").value;
-      const inputText = document.getElementById("textInput").value;
-      let results = [];
+      const resultsBody = document.getElementById("resultsBody");
+      const table = document.getElementById("resultsTable");
+      resultsBody.innerHTML = "";
+
+      let matches = [];
 
       if (mode === "url") {
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        results = inputText.match(urlRegex) || [];
+        const urlRegex = /\bhttps?:\/\/[^\s<>"']+/gi;
+        matches = text.match(urlRegex) || [];
       } else {
         const start = document.getElementById("startTag").value;
         const end = document.getElementById("endTag").value;
-        if (!start || !end) {
-          alert("Please enter both start and end strings.");
-          return;
-        }
-        const regex = new RegExp(start + "(.*?)" + end, "gs");
-        let match;
-        while ((match = regex.exec(inputText)) !== null) {
-          results.push(match[1].trim());
+        if (start && end) {
+          const pattern = new RegExp(`${escapeRegExp(start)}(.*?)${escapeRegExp(end)}`, "gs");
+          let match;
+          while ((match = pattern.exec(text)) !== null) {
+            matches.push(match[1].trim());
+          }
         }
       }
 
-      const resultsBody = document.getElementById("resultsBody");
-      resultsBody.innerHTML = "";
-      results.forEach((res, index) => {
-        const row = `<tr><td>${index + 1}</td><td>${res}</td></tr>`;
-        resultsBody.insertAdjacentHTML("beforeend", row);
+      matches.forEach((m, i) => {
+        const row = document.createElement("tr");
+        const num = document.createElement("td");
+        num.textContent = i + 1;
+        const val = document.createElement("td");
+
+        if (mode === "url") {
+          const link = document.createElement("a");
+          link.href = m;
+          link.textContent = m;
+          link.target = "_blank";
+          val.appendChild(link);
+        } else {
+          val.textContent = m;
+        }
+
+        row.appendChild(num);
+        row.appendChild(val);
+        resultsBody.appendChild(row);
       });
 
-      document.getElementById("resultsTable").classList.toggle("hidden", results.length === 0);
-      document.getElementById("saveSection").classList.toggle("hidden", results.length === 0);
-
-      // Store in memory temporarily
-      window.currentExtracted = results;
+      table.classList.toggle("hidden", matches.length === 0);
     }
 
-    function saveResult() {
-      const name = document.getElementById("saveName").value.trim();
-      if (!name) {
-        alert("Please enter a name to save your data.");
-        return;
-      }
-      const data = window.currentExtracted || [];
-      localStorage.setItem("parser_save_" + name, JSON.stringify(data));
-      alert("Saved successfully as '" + name + "'!");
-      populateSavedList();
-      document.getElementById("saveName").value = "";
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
-
-    function populateSavedList() {
-      const savedData = document.getElementById("savedData");
-      savedData.innerHTML = `<option value="">-- Select a saved item --</option>`;
-      for (let key in localStorage) {
-        if (key.startsWith("parser_save_")) {
-          const name = key.replace("parser_save_", "");
-          savedData.insertAdjacentHTML("beforeend", `<option value="${key}">${name}</option>`);
-        }
-      }
-    }
-
-    function loadSaved() {
-      const key = document.getElementById("savedData").value;
-      if (!key) return;
-
-      const data = JSON.parse(localStorage.getItem(key)) || [];
-      const resultsBody = document.getElementById("resultsBody");
-      resultsBody.innerHTML = "";
-
-      data.forEach((res, index) => {
-        const row = `<tr><td>${index + 1}</td><td>${res}</td></tr>`;
-        resultsBody.insertAdjacentHTML("beforeend", row);
-      });
-
-      document.getElementById("resultsTable").classList.remove("hidden");
-    }
-
-    window.onload = populateSavedList;
   </script>
 
 </body>
