@@ -12,6 +12,7 @@
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background-color: #f4f4f4; }
     .hidden { display: none; }
+    a { color: blue; text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -23,19 +24,19 @@
 
   <label for="modeSelect">Choose Extraction Type:</label>
   <select id="modeSelect" onchange="toggleInputMode()">
+    <option value="url" selected>Extract URLs (websites)</option>
     <option value="custom">Custom Tag/Pattern</option>
-    <option value="url">Extract URLs (websites)</option>
   </select>
 
-  <div id="customInputs">
-    <label for="startTag">Start string (e.g., &lt;loc&gt;):</label>
-    <input id="startTag" type="text" placeholder="Start string">
+  <div id="customInputs" class="hidden">
+    <label for="startTag">Start string:</label>
+    <input id="startTag" type="text" placeholder="e.g., <loc>">
     
-    <label for="endTag">End string (e.g., &lt;/loc&gt;):</label>
-    <input id="endTag" type="text" placeholder="End string">
+    <label for="endTag">End string:</label>
+    <input id="endTag" type="text" placeholder="e.g., </loc>">
   </div>
 
-  <button onclick="extractMatches()">Extract</button>
+  <button onclick="extractText()">Extract</button>
 
   <div id="resultsContainer"></div>
 
@@ -43,49 +44,148 @@
     function toggleInputMode() {
       const mode = document.getElementById("modeSelect").value;
       const customInputs = document.getElementById("customInputs");
-      customInputs.style.display = mode === "custom" ? "block" : "none";
+      customInputs.classList.toggle("hidden", mode !== "custom");
     }
 
-    function extractMatches() {
+    function extractText() {
       const text = document.getElementById("textInput").value;
       const mode = document.getElementById("modeSelect").value;
-      let matches = [];
+      let results = [];
 
       if (mode === "url") {
-        const urlRegex = /https?:\/\/[^\s"'<>\]]+/g;
-        matches = text.match(urlRegex) || [];
+        const urlRegex = /https?:\/\/[^\s"'<>]+/g;
+        results = text.match(urlRegex) || [];
       } else {
-        const start = document.getElementById("startTag").value;
-        const end = document.getElementById("endTag").value;
-
-        if (!start || !end) {
-          alert("Please provide both start and end strings.");
+        const startTag = document.getElementById("startTag").value;
+        const endTag = document.getElementById("endTag").value;
+        if (!startTag || !endTag) {
+          alert("Please enter both start and end strings.");
           return;
         }
-
-        const pattern = new RegExp(`${escapeRegExp(start)}(.*?)${escapeRegExp(end)}`, "gs");
-        matches = [...text.matchAll(pattern)].map(m => m[1]);
+        const pattern = new RegExp(`${escapeReg(startTag)}(.*?)${escapeReg(endTag)}`, "gs");
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          results.push(match[1].trim());
+        }
       }
 
-      displayResults(matches);
+      displayResults(results);
     }
 
-    function escapeRegExp(string) {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    function escapeReg(text) {
+      return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    function displayResults(matches) {
+    function displayResults(results) {
       const container = document.getElementById("resultsContainer");
-      if (matches.length === 0) {
-        container.innerHTML = "<p>No matches found.</p>";
+      if (results.length === 0) {
+        container.innerHTML = "<p><strong>No results found.</strong></p>";
         return;
       }
 
-      let html = "<table><thead><tr><th>#</th><th>Match</th></tr></thead><tbody>";
-      matches.forEach((match, index) => {
-        html += `<tr><td>${index + 1}</td><td>${match}</td></tr>`;
-      });
-      html += "</tbody></table>";
+      let html = "<h3>Results:</h3><ul>";
+      for (const item of results) {
+        const isURL = item.startsWith("http");
+        html += `<li>${isURL ? `<a href="${item}" target="_blank">${item}</a>` : item}</li>`;
+      }
+      html += "</ul>";
+      container.innerHTML = html;
+    }
+  </script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Text Extractor</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    textarea, input, select { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
+    button { padding: 10px 20px; margin-top: 10px; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    .hidden { display: none; }
+    a { color: blue; text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <h2>🔍 Smart Text Extractor</h2>
+
+  <label for="textInput">Paste your text:</label>
+  <textarea id="textInput" placeholder="Enter or paste your text here..." rows="10"></textarea>
+
+  <label for="modeSelect">Choose Extraction Type:</label>
+  <select id="modeSelect" onchange="toggleInputMode()">
+    <option value="url" selected>Extract URLs (websites)</option>
+    <option value="custom">Custom Tag/Pattern</option>
+  </select>
+
+  <div id="customInputs" class="hidden">
+    <label for="startTag">Start string:</label>
+    <input id="startTag" type="text" placeholder="e.g., <loc>">
+    
+    <label for="endTag">End string:</label>
+    <input id="endTag" type="text" placeholder="e.g., </loc>">
+  </div>
+
+  <button onclick="extractText()">Extract</button>
+
+  <div id="resultsContainer"></div>
+
+  <script>
+    function toggleInputMode() {
+      const mode = document.getElementById("modeSelect").value;
+      const customInputs = document.getElementById("customInputs");
+      customInputs.classList.toggle("hidden", mode !== "custom");
+    }
+
+    function extractText() {
+      const text = document.getElementById("textInput").value;
+      const mode = document.getElementById("modeSelect").value;
+      let results = [];
+
+      if (mode === "url") {
+        const urlRegex = /https?:\/\/[^\s"'<>]+/g;
+        results = text.match(urlRegex) || [];
+      } else {
+        const startTag = document.getElementById("startTag").value;
+        const endTag = document.getElementById("endTag").value;
+        if (!startTag || !endTag) {
+          alert("Please enter both start and end strings.");
+          return;
+        }
+        const pattern = new RegExp(`${escapeReg(startTag)}(.*?)${escapeReg(endTag)}`, "gs");
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          results.push(match[1].trim());
+        }
+      }
+
+      displayResults(results);
+    }
+
+    function escapeReg(text) {
+      return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function displayResults(results) {
+      const container = document.getElementById("resultsContainer");
+      if (results.length === 0) {
+        container.innerHTML = "<p><strong>No results found.</strong></p>";
+        return;
+      }
+
+      let html = "<h3>Results:</h3><ul>";
+      for (const item of results) {
+        const isURL = item.startsWith("http");
+        html += `<li>${isURL ? `<a href="${item}" target="_blank">${item}</a>` : item}</li>`;
+      }
+      html += "</ul>";
       container.innerHTML = html;
     }
   </script>
