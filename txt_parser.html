@@ -29,10 +29,10 @@
   </select>
 
   <div id="customInputs" class="hidden">
-    <label for="startTag">Start string (e.g., <code>&lt;title&gt;</code>, <code>BEGIN:</code>):</label>
+    <label for="startTag">Start string (e.g., &lt;title&gt;, BEGIN:):</label>
     <input id="startTag" type="text" placeholder="e.g., <title>">
 
-    <label for="endTag">End string (e.g., <code>&lt;/title&gt;</code>, <code>END:</code>):</label>
+    <label for="endTag">End string (e.g., &lt;/title&gt;, END:):</label>
     <input id="endTag" type="text" placeholder="e.g., </title>">
   </div>
 
@@ -40,79 +40,72 @@
 
   <table id="resultsTable" class="hidden">
     <thead>
-      <tr><th>#</th><th>Extracted Result</th></tr>
+      <tr>
+        <th>#</th>
+        <th>Extracted Text</th>
+      </tr>
     </thead>
     <tbody id="resultsBody"></tbody>
   </table>
 
   <script>
     function toggleInputMode() {
-      const mode = document.getElementById('modeSelect').value;
-      document.getElementById('customInputs').classList.toggle('hidden', mode !== 'custom');
+      const mode = document.getElementById("modeSelect").value;
+      document.getElementById("customInputs").classList.toggle("hidden", mode !== "custom");
     }
 
     function extractText() {
-      const inputText = document.getElementById("textInput").value;
+      const text = document.getElementById("textInput").value;
       const mode = document.getElementById("modeSelect").value;
-      let results = [];
+      const resultsBody = document.getElementById("resultsBody");
+      const table = document.getElementById("resultsTable");
+      resultsBody.innerHTML = "";
+
+      let matches = [];
 
       if (mode === "url") {
-        const urlRegex = /https?:\/\/[^\s"<>\]]+/g;
-        results = inputText.match(urlRegex) || [];
+        const urlRegex = /\bhttps?:\/\/[^\s<>"']+/gi;
+        matches = text.match(urlRegex) || [];
       } else {
         const start = document.getElementById("startTag").value;
         const end = document.getElementById("endTag").value;
-        if (!start || !end) {
-          alert("Please enter both start and end strings.");
-          return;
-        }
-
-        const pattern = new RegExp(`${escapeRegex(start)}(.*?)${escapeRegex(end)}`, "gs");
-        let match;
-        while ((match = pattern.exec(inputText)) !== null) {
-          results.push(match[1].trim());
+        if (start && end) {
+          const pattern = new RegExp(`${escapeRegExp(start)}(.*?)${escapeRegExp(end)}`, "gs");
+          let match;
+          while ((match = pattern.exec(text)) !== null) {
+            matches.push(match[1].trim());
+          }
         }
       }
 
-      renderResults(results, mode === "url");
-    }
-
-    function escapeRegex(str) {
-      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    }
-
-    function renderResults(items, isLink = false) {
-      const table = document.getElementById("resultsTable");
-      const body = document.getElementById("resultsBody");
-      body.innerHTML = "";
-      if (items.length === 0) {
-        table.classList.add("hidden");
-        alert("No matches found.");
-        return;
-      }
-      table.classList.remove("hidden");
-
-      items.forEach((item, i) => {
+      matches.forEach((m, i) => {
         const row = document.createElement("tr");
-        const numCell = document.createElement("td");
-        numCell.textContent = i + 1;
+        const num = document.createElement("td");
+        num.textContent = i + 1;
+        const val = document.createElement("td");
 
-        const contentCell = document.createElement("td");
-        if (isLink) {
-          const a = document.createElement("a");
-          a.href = item;
-          a.target = "_blank";
-          a.textContent = item;
-          contentCell.appendChild(a);
+        if (mode === "url") {
+          const link = document.createElement("a");
+          link.href = m;
+          link.textContent = m;
+          link.target = "_blank";
+          val.appendChild(link);
         } else {
-          contentCell.textContent = item;
+          val.textContent = m;
         }
 
-        row.appendChild(numCell);
-        row.appendChild(contentCell);
-        body.appendChild(row);
+        row.appendChild(num);
+        row.appendChild(val);
+        resultsBody.appendChild(row);
       });
+
+      table.classList.toggle("hidden", matches.length === 0);
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
   </script>
+
 </body>
 </html>
