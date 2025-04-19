@@ -25,73 +25,94 @@
   <label for="modeSelect">Choose Extraction Type:</label>
   <select id="modeSelect" onchange="toggleInputMode()">
     <option value="url" selected>Extract URLs (websites)</option>
-    <option value="custom">Custom Tag/Pattern</option>
+    <option value="custom">Custom Start & End Strings</option>
   </select>
 
   <div id="customInputs" class="hidden">
-    <label for="startTag">Start string:</label>
-    <input id="startTag" type="text" placeholder="e.g., <loc>">
-    
-    <label for="endTag">End string:</label>
-    <input id="endTag" type="text" placeholder="e.g., </loc>">
+    <label for="startTag">Start string (e.g., <code>&lt;title&gt;</code>, <code>BEGIN:</code>):</label>
+    <input id="startTag" type="text" placeholder="e.g., <title> or BEGIN:">
+
+    <label for="endTag">End string (e.g., <code>&lt;/title&gt;</code>, <code>END:</code>):</label>
+    <input id="endTag" type="text" placeholder="e.g., </title> or END:">
   </div>
 
   <button onclick="extractText()">Extract</button>
 
-  <div id="resultsContainer"></div>
+  <table id="resultsTable" class="hidden">
+    <thead>
+      <tr><th>#</th><th>Extracted Result</th></tr>
+    </thead>
+    <tbody id="resultsBody"></tbody>
+  </table>
 
   <script>
     function toggleInputMode() {
-      const mode = document.getElementById("modeSelect").value;
-      const customInputs = document.getElementById("customInputs");
-      customInputs.classList.toggle("hidden", mode !== "custom");
+      const mode = document.getElementById('modeSelect').value;
+      document.getElementById('customInputs').classList.toggle('hidden', mode !== 'custom');
     }
 
     function extractText() {
-      const text = document.getElementById("textInput").value;
+      const inputText = document.getElementById("textInput").value;
       const mode = document.getElementById("modeSelect").value;
       let results = [];
 
       if (mode === "url") {
-        const urlRegex = /https?:\/\/[^\s"'<>]+/g;
-        results = text.match(urlRegex) || [];
+        const urlRegex = /https?:\/\/[^\s"<>\]]+/g;
+        results = inputText.match(urlRegex) || [];
       } else {
-        const startTag = document.getElementById("startTag").value;
-        const endTag = document.getElementById("endTag").value;
-        if (!startTag || !endTag) {
+        const start = document.getElementById("startTag").value;
+        const end = document.getElementById("endTag").value;
+        if (!start || !end) {
           alert("Please enter both start and end strings.");
           return;
         }
-        const pattern = new RegExp(`${escapeReg(startTag)}(.*?)${escapeReg(endTag)}`, "gs");
+
+        const pattern = new RegExp(`${escapeRegex(start)}(.*?)${escapeRegex(end)}`, "gs");
         let match;
-        while ((match = pattern.exec(text)) !== null) {
+        while ((match = pattern.exec(inputText)) !== null) {
           results.push(match[1].trim());
         }
       }
 
-      displayResults(results);
+      renderResults(results, mode === "url");
     }
 
-    function escapeReg(text) {
-      return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    function escapeRegex(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 
-    function displayResults(results) {
-      const container = document.getElementById("resultsContainer");
-      if (results.length === 0) {
-        container.innerHTML = "<p><strong>No results found.</strong></p>";
+    function renderResults(items, isLink = false) {
+      const table = document.getElementById("resultsTable");
+      const body = document.getElementById("resultsBody");
+      body.innerHTML = "";
+      if (items.length === 0) {
+        table.classList.add("hidden");
+        alert("No matches found.");
         return;
       }
+      table.classList.remove("hidden");
 
-      let html = "<h3>Results:</h3><ul>";
-      for (const item of results) {
-        const isURL = item.startsWith("http");
-        html += `<li>${isURL ? `<a href="${item}" target="_blank">${item}</a>` : item}</li>`;
-      }
-      html += "</ul>";
-      container.innerHTML = html;
+      items.forEach((item, i) => {
+        const row = document.createElement("tr");
+        const numCell = document.createElement("td");
+        numCell.textContent = i + 1;
+
+        const contentCell = document.createElement("td");
+        if (isLink) {
+          const a = document.createElement("a");
+          a.href = item;
+          a.target = "_blank";
+          a.textContent = item;
+          contentCell.appendChild(a);
+        } else {
+          contentCell.textContent = item;
+        }
+
+        row.appendChild(numCell);
+        row.appendChild(contentCell);
+        body.appendChild(row);
+      });
     }
   </script>
-
 </body>
 </html>
