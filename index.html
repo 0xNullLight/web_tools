@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Text URL + Priority Extractor</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 800px; margin: auto; }
+    textarea { width: 100%; height: 200px; margin-top: 10px; }
+    button { margin: 10px 0; padding: 10px 20px; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f9f9f9; }
+  </style>
+</head>
+<body>
+
+  <h2>Extract URLs and Priorities from Text</h2>
+  <p>Paste any text below — we'll pull out any URLs and associated priority values:</p>
+  <textarea id="textInput" placeholder="Paste your text here..."></textarea>
+  <br />
+  <button onclick="extractData()">Extract</button>
+
+  <table id="resultTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>URL</th>
+        <th>Priority</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function extractData() {
+      const input = document.getElementById("textInput").value;
+
+      const urls = [...input.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1]);
+      const priorities = [...input.matchAll(/<priority>(.*?)<\/priority>/g)].map(m => m[1]);
+
+      const tbody = document.querySelector("#resultTable tbody");
+      tbody.innerHTML = "";
+
+      const maxLength = Math.max(urls.length, priorities.length);
+
+      for (let i = 0; i < maxLength; i++) {
+        const row = document.createElement("tr");
+        const urlCell = document.createElement("td");
+        const priorityCell = document.createElement("td");
+
+        urlCell.textContent = urls[i] || "(missing)";
+        priorityCell.textContent = priorities[i] || "(missing)";
+
+        row.appendChild(urlCell);
+        row.appendChild(priorityCell);
+        tbody.appendChild(row);
+      }
+
+      document.getElementById("resultTable").style.display = "table";
+    }
+  </script>
+
+</body>
+</html>
