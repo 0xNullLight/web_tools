@@ -24,7 +24,7 @@
 
   <label for="modeSelect">Choose Extraction Type:</label>
   <select id="modeSelect" onchange="toggleInputMode()">
-    <option value="url" selected>Extract URLs (websites)</option>
+    <option value="url">Extract URLs (websites)</option>
     <option value="custom">Custom Start & End Strings</option>
   </select>
 
@@ -49,6 +49,13 @@
   </table>
 
   <script>
+    // Ensure the first option is selected by default when the page loads
+    document.addEventListener("DOMContentLoaded", function () {
+      const modeSelect = document.getElementById("modeSelect");
+      modeSelect.value = "url"; // Default to 'url' mode
+      toggleInputMode(); // Update visibility of custom inputs
+    });
+
     function toggleInputMode() {
       const mode = document.getElementById("modeSelect").value;
       document.getElementById("customInputs").classList.toggle("hidden", mode !== "custom");
